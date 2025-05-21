@@ -5,3 +5,5 @@ This repository contains a collection of random scripts written in different pro
 ## List of Scripts
 
 - [Custom PyAutoGUI functions](./pyautogui/)
+- [Custom PowerShell Code](./PowerShell/)
+  - [Powershell logging](./PowerShell/Loggingfunctions.ps1)
