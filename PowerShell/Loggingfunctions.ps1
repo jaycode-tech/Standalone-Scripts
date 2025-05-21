@@ -116,6 +116,11 @@ The path to the main log file. The transcript file will be created in the same d
 .PARAMETER CreateLogFileIfNotExists
 If set to $true, creates the log file and transcript file if they do not exist.
 
+.EXAMPLE
+$transcriptLogger = [TranscriptLogger]::new("Info", "C:\Logs\MyLog.log", $true)
+$transcriptLogger.WriteLog("This is a test message", "Info")
+$transcriptLogger.WriteLog("This is a warning message", "Warning")
+
 .NOTES
 The transcript is started automatically if a log file path is provided. Use StopTranscript() to end the transcript.
 #>
