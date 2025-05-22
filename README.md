@@ -7,3 +7,5 @@ This repository contains a collection of random scripts written in different pro
 - [Custom PyAutoGUI functions](./pyautogui/)
 - [Custom PowerShell Code](./PowerShell/)
   - [Powershell logging](./PowerShell/Loggingfunctions.ps1)
+  - [TimeIt Metrics](./PowerShell/PerformanceMetric.ps1)
+  - [Install Modules](./PowerShell/Install&Import_PSModules.ps1)

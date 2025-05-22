@@ -1,3 +1,23 @@
+# Author: Jaya Surya Pennada
+# Date: 2025-05-20
+#
+# DESCRIPTION:
+#   This script provides two PowerShell classes for advanced logging:
+#   - Logger: Logs messages to the console and optionally to a file, with log level and color support.
+#   - TranscriptLogger: Inherits from Logger and adds PowerShell transcript logging.
+#
+# USAGE:
+#   $logger = [Logger]::new("Info", "C:\Logs\MyLog.log", $true)
+#   $logger.WriteLog("This is an info message", "Info")
+#   $transcriptLogger = [TranscriptLogger]::new("Info", "C:\Logs\MyLog.log", $true)
+#   $transcriptLogger.WriteLog("This is a test message", "Info")
+#   $transcriptLogger.StopTranscript()
+#
+# NOTES:
+#   - Ensure the script has permission to write to the specified log file path.
+#   - The transcript is started automatically if a log file path is provided.
+#   - Use StopTranscript() to end the transcript.
+
 class Logger {
     [string]$SetLogLevel
     [string]$LogFilePath
@@ -13,8 +33,12 @@ class Logger {
         $this.CreateLogFileIfNotExists = $CreateLogFileIfNotExists
 
         # Create log file at initialization if required
-        if ($this.LogFilePath -and $this.CreateLogFileIfNotExists -and -not (Test-Path -Path $this.LogFilePath)) {
-            New-Item -ItemType File -Path $this.LogFilePath -Force | Out-Null
+        try {
+            if ($this.LogFilePath -and $this.CreateLogFileIfNotExists -and -not (Test-Path -Path $this.LogFilePath)) {
+                New-Item -ItemType File -Path $this.LogFilePath -Force | Out-Null
+            }
+        } catch {
+            Write-Warning "Failed to create log file: $_"
         }
     }
     <#
@@ -58,7 +82,6 @@ class Logger {
         [string]$LogLevel = "Info",
         [string]$ForegroundColor = $null
     ) {
-
         # Default colors for log types
         $LogColors = @{
             "Info"       = "White"
@@ -86,15 +109,22 @@ class Logger {
 
         # Display the log message
         $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        Write-Host -ForegroundColor $ColorToUse -Object "[${Timestamp}] [${LogLevel}] [${LogType}] - $Message"
+        try {
+            Write-Host -ForegroundColor $ColorToUse -Object "[${Timestamp}] [${LogLevel}] [${LogType}] - $Message"
+        } catch {
+            Write-Warning "Failed to write to console: $_"
+        }
 
         # Append the log message to the log file if provided
         if ($this.LogFilePath) {
-            if (Test-Path -Path $this.LogFilePath) {
-                Add-Content -Path $this.LogFilePath -Value "[${Timestamp}] [${LogLevel}] [${LogType}] - $Message"
+            try {
+                if (Test-Path -Path $this.LogFilePath) {
+                    Add-Content -Path $this.LogFilePath -Value "[${Timestamp}] [${LogLevel}] [${LogType}] - $Message"
+                }
+            } catch {
+                Write-Warning "Failed to write to log file: $_"
             }
         }
-    
     }
 }
 
@@ -137,20 +167,23 @@ class TranscriptLogger : Logger {
             $ext = [System.IO.Path]::GetExtension($this.LogFilePath)
             $dir = [System.IO.Path]::GetDirectoryName($this.LogFilePath)
             $this.TranscriptPath = Join-Path $dir ("${base}_transcript${ext}")
-            if (
-                ($this.CreateLogFileIfNotExists -and -not (Test-Path -Path $this.LogFilePath)) -or
-                (Test-Path -Path $this.LogFilePath)
-            ) {
-                # Ensure the transcript file exists before starting transcript
-                if (-not (Test-Path -Path $this.TranscriptPath)) {
-                    New-Item -ItemType File -Path $this.TranscriptPath -Force | Out-Null
+            try {
+                if (
+                    ($this.CreateLogFileIfNotExists -and -not (Test-Path -Path $this.LogFilePath)) -or
+                    (Test-Path -Path $this.LogFilePath)
+                ) {
+                    # Ensure the transcript file exists before starting transcript
+                    if (-not (Test-Path -Path $this.TranscriptPath)) {
+                        New-Item -ItemType File -Path $this.TranscriptPath -Force | Out-Null
+                    }
+                    try {
+                        Start-Transcript -Path $this.TranscriptPath -Force | Out-Null
+                    } catch {
+                        Write-Warning "Failed to start transcript: $_"
+                    }
                 }
-                try {
-                    Start-Transcript -Path $this.TranscriptPath -Force | Out-Null
-                }
-                catch {
-                    Write-Warning "Failed to start transcript: $_"
-                }
+            } catch {
+                Write-Warning "Failed to initialize transcript file: $_"
             }
         }
     }
